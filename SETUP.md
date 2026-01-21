@@ -6,7 +6,7 @@
 
 ```bash
 git clone <repository-url>
-cd gravitee-audit-viewer
+cd gravitee-audit
 ```
 
 ### 2. Dependencies Yükləyin
