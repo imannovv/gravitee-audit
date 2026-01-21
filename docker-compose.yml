@@ -1,0 +1,27 @@
+services:
+  gravitee-audit-viewer:
+    build: .
+    container_name: gravitee-audit-viewer
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      # Server Configuration
+      PORT: 3000
+      NODE_ENV: production
+      # MongoDB Configuration
+      MONGO_HOST: x.x.x.x
+      MONGO_PORT: 27017
+      MONGO_USERNAME: gravitee_apim
+      MONGO_PASSWORD: "strong_password"
+      MONGO_DATABASE: gravitee
+      MONGO_AUTH_SOURCE: admin
+      # Collections
+      MONGO_COLLECTION_AUDITS: apim_audits
+      MONGO_COLLECTION_USERS: apim_users
+      MONGO_COLLECTION_APIS: apim_apis
+      MONGO_COLLECTION_APPLICATIONS: apim_applications
+
+# networks:
+#   internal:
+#     driver: bridge

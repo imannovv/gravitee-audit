@@ -1,0 +1,2694 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gravitee APIM - Audit Management</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #0066FF;
+            --primary-dark: #0052CC;
+            --primary-light: #E6F0FF;
+            --secondary: #6B7280;
+            --success: #10B981;
+            --warning: #F59E0B;
+            --danger: #EF4444;
+            --dark: #111827;
+            --dark-light: #1F2937;
+            --gray-50: #F9FAFB;
+            --gray-100: #F3F4F6;
+            --gray-200: #E5E7EB;
+            --gray-300: #D1D5DB;
+            --gray-400: #9CA3AF;
+            --gray-500: #6B7280;
+            --gray-600: #4B5563;
+            --gray-700: #374151;
+            --gray-800: #1F2937;
+            --gray-900: #111827;
+            --border-radius: 8px;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #F8FAFC;
+            color: var(--gray-900);
+            min-height: 100vh;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Layout */
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background: var(--dark);
+            color: white;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100vh;
+            left: 0;
+            top: 0;
+            z-index: 100;
+        }
+
+        .sidebar-header {
+            padding: 24px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 18px;
+            font-weight: 700;
+            color: white;
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--primary) 0%, #0052CC 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            padding: 20px 0;
+            overflow-y: auto;
+        }
+
+        .nav-section {
+            margin-bottom: 24px;
+        }
+
+        .nav-section-title {
+            padding: 0 20px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--gray-400);
+            margin-bottom: 8px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 20px;
+            color: var(--gray-300);
+            text-decoration: none;
+            transition: all 0.2s;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+        }
+
+        .nav-item.active {
+            background: rgba(0, 102, 255, 0.15);
+            color: var(--primary);
+            border-left: 3px solid var(--primary);
+            padding-left: 17px;
+        }
+
+        .nav-icon {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sidebar-footer {
+            padding: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: var(--gray-400);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: 260px;
+            background: #F8FAFC;
+        }
+
+        .topbar {
+            background: white;
+            border-bottom: 1px solid var(--gray-200);
+            padding: 16px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .page-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--gray-900);
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: var(--gray-500);
+        }
+
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .topbar-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .content-wrapper {
+            padding: 32px;
+            max-width: 1600px;
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card {
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--border-radius);
+            padding: 24px;
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary) 0%, #0052CC 100%);
+            transform: scaleX(0);
+            transition: transform 0.3s;
+        }
+
+        .stat-card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+
+        .stat-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .stat-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .stat-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--gray-600);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .stat-icon.primary {
+            background: var(--primary-light);
+            color: var(--primary);
+        }
+
+        .stat-icon.success {
+            background: #D1FAE5;
+            color: var(--success);
+        }
+
+        .stat-icon.warning {
+            background: #FEF3C7;
+            color: var(--warning);
+        }
+
+        .stat-value {
+            font-size: 36px;
+            font-weight: 700;
+            color: var(--gray-900);
+            line-height: 1;
+            margin-bottom: 8px;
+        }
+
+        .stat-change {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .stat-change.positive {
+            color: var(--success);
+        }
+
+        .stat-change.neutral {
+            color: var(--gray-500);
+        }
+
+        /* Filters */
+        .filters-card {
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--border-radius);
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .filters-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .filters-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--gray-900);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .filter-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .filter-group label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--gray-700);
+        }
+
+        .filter-group input,
+        .filter-group select {
+            padding: 10px 14px;
+            border: 1px solid var(--gray-300);
+            border-radius: var(--border-radius);
+            font-size: 14px;
+            font-family: inherit;
+            color: var(--gray-900);
+            background: white;
+            transition: all 0.2s;
+        }
+
+        .filter-group input:hover,
+        .filter-group select:hover {
+            border-color: var(--gray-400);
+        }
+
+        .filter-group input:focus,
+        .filter-group select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-light);
+        }
+
+        .filter-group input::placeholder {
+            color: var(--gray-400);
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 14px;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: var(--primary-dark);
+            box-shadow: var(--shadow-md);
+            transform: translateY(-1px);
+        }
+
+        .btn-primary:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: var(--gray-700);
+            border: 1px solid var(--gray-300);
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: var(--gray-50);
+            border-color: var(--gray-400);
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--gray-600);
+        }
+
+        .btn-ghost:hover:not(:disabled) {
+            background: var(--gray-100);
+            color: var(--gray-900);
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 13px;
+        }
+
+        .btn-icon {
+            width: 36px;
+            height: 36px;
+            padding: 0;
+            border-radius: 6px;
+        }
+
+        .filter-actions {
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+        }
+
+        /* Table Card */
+        .table-card {
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--gray-200);
+            background: var(--gray-50);
+        }
+
+        .table-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+
+        .table-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .pagination-info {
+            font-size: 13px;
+            color: var(--gray-600);
+            font-weight: 500;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: var(--gray-50);
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        th {
+            text-align: left;
+            padding: 14px 20px;
+            color: var(--gray-700);
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+
+        tbody tr {
+            border-bottom: 1px solid var(--gray-200);
+            transition: background 0.15s;
+        }
+
+        tbody tr:hover {
+            background: var(--gray-50);
+        }
+
+        tbody tr:last-child {
+            border-bottom: none;
+        }
+
+        td {
+            padding: 16px 20px;
+            color: var(--gray-900);
+            font-size: 14px;
+            vertical-align: middle;
+        }
+
+        td:first-child {
+            font-weight: 500;
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .badge-api {
+            background: #D1FAE5;
+            color: #065F46;
+        }
+
+        .badge-app {
+            background: #FEF3C7;
+            color: #92400E;
+        }
+
+        .badge-env {
+            background: #DBEAFE;
+            color: #1E40AF;
+        }
+
+        .badge-org {
+            background: #FCE7F3;
+            color: #9F1239;
+        }
+
+        .badge-default {
+            background: var(--gray-100);
+            color: var(--gray-700);
+        }
+
+        .event-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .event-badge::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+        }
+
+        .event-created {
+            background: #D1FAE5;
+            color: #065F46;
+        }
+
+        .event-created::before {
+            background: #10B981;
+        }
+
+        .event-updated {
+            background: #DBEAFE;
+            color: #1E3A8A;
+        }
+
+        .event-updated::before {
+            background: #3B82F6;
+        }
+
+        .event-deleted {
+            background: #FEE2E2;
+            color: #991B1B;
+        }
+
+        .event-deleted::before {
+            background: #EF4444;
+        }
+
+        .event-default {
+            background: var(--gray-100);
+            color: var(--gray-700);
+        }
+
+        .event-default::before {
+            background: var(--gray-400);
+        }
+
+        /* Loading States */
+        .loading {
+            text-align: center;
+            padding: 80px 20px;
+        }
+
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid var(--gray-200);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: var(--gray-600);
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 24px;
+            border-top: 1px solid var(--gray-200);
+            background: var(--gray-50);
+        }
+
+        .pagination-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .pagination button {
+            padding: 8px 14px;
+            border: 1px solid var(--gray-300);
+            background: white;
+            border-radius: var(--border-radius);
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--gray-700);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .pagination button:hover:not(:disabled) {
+            background: var(--gray-50);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .pagination button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .page-info {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--gray-700);
+            padding: 0 12px;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(17, 24, 39, 0.7);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            animation: fadeIn 0.2s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            max-width: 1100px;
+            width: 100%;
+            max-height: 90vh;
+            overflow: hidden;
+            box-shadow: var(--shadow-xl);
+            animation: slideUp 0.3s;
+            display: flex;
+            flex-direction: column;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 24px 32px;
+            border-bottom: 1px solid var(--gray-200);
+            background: var(--gray-50);
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--gray-900);
+        }
+
+        .close-modal {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            border: 1px solid var(--gray-300);
+            border-radius: 6px;
+            font-size: 20px;
+            color: var(--gray-600);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .close-modal:hover {
+            background: var(--gray-100);
+            border-color: var(--gray-400);
+            color: var(--gray-900);
+        }
+
+        .modal-body {
+            padding: 32px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        /* Detail Grid */
+        .detail-grid {
+            display: grid;
+            gap: 24px;
+        }
+
+        .detail-section {
+            background: var(--gray-50);
+            border: 1px solid var(--gray-200);
+            border-radius: var(--border-radius);
+            padding: 20px;
+        }
+
+        .detail-section-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--gray-700);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .detail-row {
+            display: grid;
+            grid-template-columns: 180px 1fr;
+            gap: 16px;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--gray-600);
+        }
+
+        .detail-value {
+            font-size: 14px;
+            color: var(--gray-900);
+            word-break: break-word;
+        }
+
+        pre {
+            background: var(--dark);
+            color: #E5E7EB;
+            padding: 16px;
+            border-radius: var(--border-radius);
+            font-size: 13px;
+            font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+            overflow-x: auto;
+            line-height: 1.6;
+        }
+
+        /* Empty & Error States */
+        .empty-state,
+        .error-state {
+            text-align: center;
+            padding: 80px 20px;
+        }
+
+        .empty-state-icon,
+        .error-state-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px;
+            background: var(--gray-100);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+        }
+
+        .error-state-icon {
+            background: #FEE2E2;
+            color: var(--danger);
+        }
+
+        .empty-state h3,
+        .error-state h3 {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 8px;
+        }
+
+        .empty-state p,
+        .error-state p {
+            font-size: 14px;
+            color: var(--gray-600);
+            margin-bottom: 20px;
+        }
+
+        .retry-btn {
+            margin-top: 16px;
+        }
+
+        .patch-operations {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .patch-operation {
+            background: #f7fafc;
+            border-left: 4px solid #667eea;
+            padding: 12px;
+            border-radius: 6px;
+        }
+
+        .patch-operation.op-add {
+            border-left-color: #10b981;
+            background: #ecfdf5;
+        }
+
+        .patch-operation.op-remove {
+            border-left-color: #ef4444;
+            background: #fef2f2;
+        }
+
+        .patch-operation.op-replace {
+            border-left-color: #f59e0b;
+            background: #fffbeb;
+        }
+
+        .patch-operation.op-copy,
+        .patch-operation.op-move {
+            border-left-color: #3b82f6;
+            background: #eff6ff;
+        }
+
+        .patch-op-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .patch-op-type {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .patch-op-type.op-add {
+            background: #10b981;
+            color: white;
+        }
+
+        .patch-op-type.op-remove {
+            background: #ef4444;
+            color: white;
+        }
+
+        .patch-op-type.op-replace {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .patch-op-type.op-copy,
+        .patch-op-type.op-move {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .patch-op-path {
+            font-family: 'Courier New', monospace;
+            color: #4b5563;
+            font-size: 13px;
+        }
+
+        .patch-op-details {
+            font-size: 13px;
+            color: #374151;
+        }
+
+        .patch-op-details strong {
+            color: #1f2937;
+        }
+
+        .patch-value-preview {
+            background: white;
+            padding: 8px;
+            border-radius: 4px;
+            margin-top: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #e5e7eb;
+        }
+
+        .patch-value-preview.collapsed {
+            max-height: 60px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .patch-value-preview.collapsed::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 30px;
+            background: linear-gradient(transparent, white);
+        }
+
+        .expand-btn {
+            background: none;
+            border: none;
+            color: #667eea;
+            cursor: pointer;
+            font-size: 12px;
+            padding: 4px 0;
+            margin-top: 4px;
+            text-decoration: underline;
+        }
+
+        .expand-btn:hover {
+            color: #5a67d8;
+        }
+        /* Page Content */
+        .page-content {
+            animation: fadeIn 0.3s;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .main-content {
+                margin-left: 0;
+            }
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="#" class="logo">
+                    <div class="logo-icon">⚡</div>
+                    <span>Gravitee APIM</span>
+                </a>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">Monitoring</div>
+                    <a href="#" class="nav-item active" onclick="showPage('audits'); return false;">
+                        <span class="nav-icon">📊</span>
+                        <span>Audit Logs</span>
+                    </a>
+                    <a href="#" class="nav-item" onclick="showPage('analytics'); return false;">
+                        <span class="nav-icon">📈</span>
+                        <span>Analytics</span>
+                    </a>
+                    <a href="#" class="nav-item" onclick="showPage('alerts'); return false;">
+                        <span class="nav-icon">⚠️</span>
+                        <span>Alerts</span>
+                    </a>
+                </div>
+                
+                <div class="nav-section">
+                    <div class="nav-section-title">Management</div>
+                    <a href="#" class="nav-item" onclick="showPage('apis'); return false;">
+                        <span class="nav-icon">🔌</span>
+                        <span>APIs</span>
+                    </a>
+                    <a href="#" class="nav-item" onclick="showPage('applications'); return false;">
+                        <span class="nav-icon">📱</span>
+                        <span>Applications</span>
+                    </a>
+                    <a href="#" class="nav-item" onclick="showPage('users'); return false;">
+                        <span class="nav-icon">👥</span>
+                        <span>Users</span>
+                    </a>
+                </div>
+                
+                <div class="nav-section">
+                    <div class="nav-section-title">Settings</div>
+                    <a href="#" class="nav-item" onclick="showPage('config'); return false;">
+                        <span class="nav-icon">⚙️</span>
+                        <span>Configuration</span>
+                    </a>
+                </div>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="connection-status">
+                    <span class="status-dot"></span>
+                    <span>MongoDB Connected</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Topbar -->
+            <div class="topbar">
+                <div class="topbar-left">
+                    <h1 class="page-title">Audit Logs</h1>
+                </div>
+                <div class="topbar-right">
+                    <div class="topbar-actions">
+                        <button class="btn btn-secondary btn-sm" onclick="refreshCurrentPage()">
+                            🔄 Yenilə
+                        </button>
+                        <button class="btn btn-primary btn-sm" onclick="exportToCSV()" id="exportBtn">
+                            📥 Export
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content -->
+            <div class="content-wrapper">
+                <!-- Audit Logs Page -->
+                <div id="auditsPage" class="page-content">
+                    <!-- Stats -->
+                    <div class="stats-grid" id="statsGrid">
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-title">Ümumi Log</div>
+                            <div class="stat-icon primary">📊</div>
+                        </div>
+                        <div class="stat-value" id="totalLogs">-</div>
+                        <div class="stat-change neutral">Bütün qeydlər</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-title">Son 24 Saat</div>
+                            <div class="stat-icon success">⚡</div>
+                        </div>
+                        <div class="stat-value" id="last24h">-</div>
+                        <div class="stat-change positive">Son gün</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-title">Son 7 Gün</div>
+                            <div class="stat-icon warning">📈</div>
+                        </div>
+                        <div class="stat-value" id="last7d">-</div>
+                        <div class="stat-change neutral">Son həftə</div>
+                    </div>
+                </div>
+
+                <!-- Filters -->
+                <div class="filters-card">
+                    <div class="filters-header">
+                        <div class="filters-title">
+                            🔍 Filterlər
+                        </div>
+                    </div>
+                    <div class="filter-row">
+                        <div class="filter-group">
+                            <label>İstifadəçi</label>
+                            <input type="text" id="filterUser" placeholder="İstifadəçi adı daxil edin..." onkeypress="if(event.key === 'Enter') applyFilters()">
+                        </div>
+                        <div class="filter-group">
+                            <label>Event</label>
+                            <select id="filterEvent">
+                                <option value="">Hamısı</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Referans Tipi</label>
+                            <select id="filterRefType">
+                                <option value="">Hamısı</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="filter-row">
+                        <div class="filter-group">
+                            <label>Başlanğıc Tarixi</label>
+                            <input type="date" id="filterStartDate">
+                        </div>
+                        <div class="filter-group">
+                            <label>Bitmə Tarixi</label>
+                            <input type="date" id="filterEndDate">
+                        </div>
+                        <div class="filter-actions">
+                            <button class="btn btn-primary" onclick="applyFilters()">
+                                🔍 Axtar
+                            </button>
+                            <button class="btn btn-secondary" onclick="resetFilters()">
+                                ↺ Sıfırla
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Table -->
+                <div class="table-card">
+                    <div class="table-header">
+                        <div class="table-title">📋 Audit Qeydləri</div>
+                        <div class="table-actions">
+                            <div class="pagination-info" id="paginationInfo"></div>
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <div id="loadingState" class="loading">
+                            <div class="spinner"></div>
+                            <p class="loading-text">Məlumatlar yüklənir...</p>
+                        </div>
+
+                        <div id="emptyState" class="empty-state" style="display: none;">
+                            <div class="empty-state-icon">📭</div>
+                            <h3>Nəticə tapılmadı</h3>
+                            <p>Seçilmiş filterlərə uyğun audit log tapılmadı</p>
+                        </div>
+
+                        <div id="errorState" class="error-state" style="display: none;">
+                            <div class="error-state-icon">⚠️</div>
+                            <h3>Xəta baş verdi</h3>
+                            <p id="errorMessage">Məlumatlar yüklənərkən xəta baş verdi</p>
+                            <button class="btn btn-primary retry-btn" onclick="loadAudits()">
+                                🔄 Yenidən cəhd et
+                            </button>
+                        </div>
+
+                        <table id="auditTable" style="display: none;">
+                            <thead>
+                                <tr>
+                                    <th>Tarix</th>
+                                    <th title="Əməliyyatı icra edən istifadəçi">İstifadəçi</th>
+                                    <th>Event</th>
+                                    <th>Tip</th>
+                                    <th>Referans</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="auditTableBody"></tbody>
+                        </table>
+                    </div>
+
+                    <div class="pagination" id="paginationControls" style="display: none;">
+                        <div class="page-info" id="pageInfo"></div>
+                        <div class="pagination-controls">
+                            <button onclick="previousPage()" id="btnPrev">← Əvvəlki</button>
+                            <button onclick="nextPage()" id="btnNext">Növbəti →</button>
+                        </div>
+                    </div>
+                </div>
+                </div>
+
+                <!-- APIs Page -->
+                <div id="apisPage" class="page-content" style="display: none;">
+                    <div class="table-card">
+                        <div class="table-header">
+                            <div class="table-title">🔌 API-lər</div>
+                            <div class="table-actions">
+                                <input type="text" id="apiSearch" placeholder="API axtar..." style="padding: 8px 14px; border: 1px solid var(--gray-300); border-radius: var(--border-radius); font-size: 14px;" onkeypress="if(event.key === 'Enter') searchAPIs()">
+                                <button class="btn btn-primary btn-sm" onclick="searchAPIs()">🔍 Axtar</button>
+                            </div>
+                        </div>
+                        <div class="table-container">
+                            <div id="apisLoading" class="loading">
+                                <div class="spinner"></div>
+                                <p class="loading-text">API-lər yüklənir...</p>
+                            </div>
+                            <table id="apisTable" style="display: none;">
+                                <thead>
+                                    <tr>
+                                        <th>Ad</th>
+                                        <th>Version</th>
+                                        <th>State</th>
+                                        <th>Visibility</th>
+                                        <th>Yenilənmə</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="apisTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Applications Page -->
+                <div id="applicationsPage" class="page-content" style="display: none;">
+                    <div class="table-card">
+                        <div class="table-header">
+                            <div class="table-title">📱 Application-lar</div>
+                            <div class="table-actions">
+                                <input type="text" id="appSearch" placeholder="Application axtar..." style="padding: 8px 14px; border: 1px solid var(--gray-300); border-radius: var(--border-radius); font-size: 14px;" onkeypress="if(event.key === 'Enter') searchApplications()">
+                                <button class="btn btn-primary btn-sm" onclick="searchApplications()">🔍 Axtar</button>
+                            </div>
+                        </div>
+                        <div class="table-container">
+                            <div id="appsLoading" class="loading">
+                                <div class="spinner"></div>
+                                <p class="loading-text">Application-lar yüklənir...</p>
+                            </div>
+                            <table id="appsTable" style="display: none;">
+                                <thead>
+                                    <tr>
+                                        <th>Ad</th>
+                                        <th>Type</th>
+                                        <th>Status</th>
+                                        <th>Owner</th>
+                                        <th>Yenilənmə</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="appsTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Users Page -->
+                <div id="usersPage" class="page-content" style="display: none;">
+                    <div class="table-card">
+                        <div class="table-header">
+                            <div class="table-title">👥 İstifadəçilər</div>
+                            <div class="table-actions">
+                                <input type="text" id="userSearch" placeholder="İstifadəçi axtar..." style="padding: 8px 14px; border: 1px solid var(--gray-300); border-radius: var(--border-radius); font-size: 14px;" onkeypress="if(event.key === 'Enter') searchUsers()">
+                                <button class="btn btn-primary btn-sm" onclick="searchUsers()">🔍 Axtar</button>
+                            </div>
+                        </div>
+                        <div class="table-container">
+                            <div id="usersLoading" class="loading">
+                                <div class="spinner"></div>
+                                <p class="loading-text">İstifadəçilər yüklənir...</p>
+                            </div>
+                            <table id="usersTable" style="display: none;">
+                                <thead>
+                                    <tr>
+                                        <th>Ad Soyad</th>
+                                        <th>Email</th>
+                                        <th>Source</th>
+                                        <th>Status</th>
+                                        <th>Yenilənmə</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="usersTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Analytics Page -->
+                <div id="analyticsPage" class="page-content" style="display: none;">
+                    <div class="stats-grid" style="margin-bottom: 24px;">
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <div class="stat-title">Top API-lər</div>
+                                <div class="stat-icon primary">🔌</div>
+                            </div>
+                            <div id="topAPIsCount" class="stat-value">-</div>
+                            <div class="stat-change neutral">Son 30 gün</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <div class="stat-title">Aktiv İstifadəçilər</div>
+                                <div class="stat-icon success">👥</div>
+                            </div>
+                            <div id="topUsersCount" class="stat-value">-</div>
+                            <div class="stat-change neutral">Son 30 gün</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <div class="stat-title">Event Növləri</div>
+                                <div class="stat-icon warning">📊</div>
+                            </div>
+                            <div id="eventTypesCount" class="stat-value">-</div>
+                            <div class="stat-change neutral">Müxtəlif event-lər</div>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                        <div class="table-card">
+                            <div class="table-header">
+                                <div class="table-title">🔥 Ən Aktiv API-lər</div>
+                            </div>
+                            <div class="table-container">
+                                <div id="analyticsLoading1" class="loading">
+                                    <div class="spinner"></div>
+                                    <p class="loading-text">Yüklənir...</p>
+                                </div>
+                                <table id="topAPIsTable" style="display: none;">
+                                    <thead>
+                                        <tr>
+                                            <th>API</th>
+                                            <th>Aktivlik</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="topAPIsBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="table-card">
+                            <div class="table-header">
+                                <div class="table-title">👤 Ən Aktiv İstifadəçilər</div>
+                            </div>
+                            <div class="table-container">
+                                <div id="analyticsLoading2" class="loading">
+                                    <div class="spinner"></div>
+                                    <p class="loading-text">Yüklənir...</p>
+                                </div>
+                                <table id="topUsersTable" style="display: none;">
+                                    <thead>
+                                        <tr>
+                                            <th>İstifadəçi</th>
+                                            <th>Aktivlik</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="topUsersBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Alerts Page -->
+                <div id="alertsPage" class="page-content" style="display: none;">
+                    <div style="background: var(--primary-light); border: 1px solid var(--primary); border-radius: var(--border-radius); padding: 16px; margin-bottom: 24px;">
+                        <div style="display: flex; align-items: start; gap: 12px;">
+                            <div style="font-size: 24px;">ℹ️</div>
+                            <div>
+                                <div style="font-weight: 600; color: var(--primary); margin-bottom: 4px;">Kritik Hadisələr Haqqında</div>
+                                <div style="font-size: 13px; color: var(--gray-700); line-height: 1.6;">
+                                    Bu səhifədə <strong>son 24 saat</strong> ərzində baş verən kritik hadisələr göstərilir:<br>
+                                    • API/Application silinməsi və arxivləşdirilməsi<br>
+                                    • İstifadəçi silinməsi və bloklanması<br>
+                                    • Membership, Plan, Subscription silinməsi<br>
+                                    • Digər mühüm dəyişikliklər
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="table-card">
+                        <div class="table-header">
+                            <div class="table-title">⚠️ Kritik Hadisələr (Son 24 saat)</div>
+                        </div>
+                        <div class="table-container">
+                            <div id="alertsLoading" class="loading">
+                                <div class="spinner"></div>
+                                <p class="loading-text">Yüklənir...</p>
+                            </div>
+                            <div id="alertsEmpty" class="empty-state" style="display: none;">
+                                <div class="empty-state-icon">✅</div>
+                                <h3>Kritik hadisə yoxdur</h3>
+                                <p>Son 24 saatda heç bir kritik hadisə qeydə alınmayıb</p>
+                            </div>
+                            <table id="alertsTable" style="display: none;">
+                                <thead>
+                                    <tr>
+                                        <th>Tarix</th>
+                                        <th>İstifadəçi</th>
+                                        <th>Event</th>
+                                        <th>Tip</th>
+                                        <th>Referans</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="alertsBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Configuration Page -->
+                <div id="configPage" class="page-content" style="display: none;">
+                    <div class="table-card">
+                        <div class="table-header">
+                            <div class="table-title">⚙️ Konfiqurasiya</div>
+                        </div>
+                        <div style="padding: 32px;">
+                            <div class="detail-section">
+                                <div class="detail-section-title">🗄️ MongoDB Bağlantısı</div>
+                                <div class="detail-row">
+                                    <div class="detail-label">Host</div>
+                                    <div class="detail-value"><code>10.0.50.73:27017</code></div>
+                                </div>
+                                <div class="detail-row">
+                                    <div class="detail-label">Database</div>
+                                    <div class="detail-value"><code>gravitee</code></div>
+                                </div>
+                                <div class="detail-row">
+                                    <div class="detail-label">Status</div>
+                                    <div class="detail-value"><span class="event-badge event-created">Connected</span></div>
+                                </div>
+                            </div>
+
+                            <div class="detail-section" style="margin-top: 24px;">
+                                <div class="detail-section-title">📊 Kolleksiyalar</div>
+                                <div class="detail-row">
+                                    <div class="detail-label">Audit Logs</div>
+                                    <div class="detail-value"><code>apim_audits</code></div>
+                                </div>
+                                <div class="detail-row">
+                                    <div class="detail-label">APIs</div>
+                                    <div class="detail-value"><code>apim_apis</code></div>
+                                </div>
+                                <div class="detail-row">
+                                    <div class="detail-label">Applications</div>
+                                    <div class="detail-value"><code>apim_applications</code></div>
+                                </div>
+                                <div class="detail-row">
+                                    <div class="detail-label">Users</div>
+                                    <div class="detail-value"><code>apim_users</code></div>
+                                </div>
+                            </div>
+
+                            <div class="detail-section" style="margin-top: 24px;">
+                                <div class="detail-section-title">🔧 Server Məlumatı</div>
+                                <div class="detail-row">
+                                    <div class="detail-label">Port</div>
+                                    <div class="detail-value"><code>3000</code></div>
+                                </div>
+                                <div class="detail-row">
+                                    <div class="detail-label">Node.js</div>
+                                    <div class="detail-value"><code id="nodeVersion">-</code></div>
+                                </div>
+                                <div class="detail-row">
+                                    <div class="detail-label">Uptime</div>
+                                    <div class="detail-value"><code id="serverUptime">-</code></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal" id="detailModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">🔍 Audit Detalları</h3>
+                <button class="close-modal" onclick="closeModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="detail-grid" id="modalDetails"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Dinamik API base URL - həm local həm də server üçün işləyir
+        const API_BASE = `${window.location.protocol}//${window.location.host}/api`;
+        let currentAuditPage = 0;
+        const pageSize = 50;
+        let totalRecords = 0;
+        let currentFilters = {};
+
+        // Load initial data
+        async function init() {
+            await loadStats();
+            await loadFilterOptions();
+            await loadAudits();
+        }
+
+        // Load statistics
+        async function loadStats() {
+            try {
+                const response = await fetch(`${API_BASE}/stats`);
+                const data = await response.json();
+                
+                document.getElementById('totalLogs').textContent = data.total.toLocaleString();
+                document.getElementById('last24h').textContent = data.last24h.toLocaleString();
+                document.getElementById('last7d').textContent = data.last7d.toLocaleString();
+            } catch (error) {
+                console.error('Stats yükləmə xətası:', error);
+            }
+        }
+
+        // Load filter options
+        async function loadFilterOptions() {
+            try {
+                const [events, refTypes] = await Promise.all([
+                    fetch(`${API_BASE}/events`).then(r => r.json()),
+                    fetch(`${API_BASE}/reference-types`).then(r => r.json())
+                ]);
+
+                const eventSelect = document.getElementById('filterEvent');
+                events.forEach(event => {
+                    const option = document.createElement('option');
+                    option.value = event;
+                    option.textContent = event;
+                    eventSelect.appendChild(option);
+                });
+
+                const refTypeSelect = document.getElementById('filterRefType');
+                refTypes.forEach(type => {
+                    const option = document.createElement('option');
+                    option.value = type;
+                    option.textContent = type;
+                    refTypeSelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Filter seçimləri yükləmə xətası:', error);
+            }
+        }
+
+        // Load audits
+        async function loadAudits() {
+            const loadingState = document.getElementById('loadingState');
+            const emptyState = document.getElementById('emptyState');
+            const errorState = document.getElementById('errorState');
+            const errorMessage = document.getElementById('errorMessage');
+            const table = document.getElementById('auditTable');
+            const paginationControls = document.getElementById('paginationControls');
+
+            loadingState.style.display = 'block';
+            emptyState.style.display = 'none';
+            errorState.style.display = 'none';
+            table.style.display = 'none';
+            paginationControls.style.display = 'none';
+
+            try {
+                const params = new URLSearchParams({
+                    skip: currentAuditPage * pageSize,
+                    limit: pageSize,
+                    ...currentFilters
+                });
+
+                const response = await fetch(`${API_BASE}/audits?${params}`);
+                
+                if (!response.ok) {
+                    throw new Error(`Server xətası: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+
+                totalRecords = data.total;
+
+                if (data.audits.length === 0) {
+                    loadingState.style.display = 'none';
+                    emptyState.style.display = 'block';
+                    return;
+                }
+
+                renderTable(data.audits);
+                updatePagination();
+
+                loadingState.style.display = 'none';
+                table.style.display = 'table';
+                paginationControls.style.display = 'flex';
+            } catch (error) {
+                console.error('Audit log yükləmə xətası:', error);
+                loadingState.style.display = 'none';
+                errorState.style.display = 'block';
+                errorMessage.textContent = error.message || 'Məlumatlar yüklənərkən xəta baş verdi';
+            }
+        }
+
+        // Render table
+        function renderTable(audits) {
+            const tbody = document.getElementById('auditTableBody');
+            tbody.innerHTML = '';
+
+            audits.forEach(audit => {
+                const row = document.createElement('tr');
+                row.style.cursor = 'pointer';
+                row.onclick = () => showDetails(audit);
+
+                const date = new Date(audit.createdAt);
+                const formattedDate = date.toLocaleString('az-AZ', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+
+                const refTypeBadge = getRefTypeBadge(audit.referenceType);
+                const eventBadge = getEventBadge(audit.event);
+                
+                // User display with email tooltip
+                let userDisplay = audit.userName || audit.user || 'N/A';
+                const userTooltip = audit.userEmail ? `title="${audit.userEmail}"` : '';
+
+                row.innerHTML = `
+                    <td style="font-weight: 500; color: var(--gray-700);">${formattedDate}</td>
+                    <td>
+                        <div style="display: flex; flex-direction: column; gap: 2px;">
+                            <strong ${userTooltip}>${userDisplay}</strong>
+                            ${audit.userEmail ? `<small style="color: var(--gray-500); font-size: 12px;">${audit.userEmail}</small>` : ''}
+                        </div>
+                    </td>
+                    <td>${eventBadge}</td>
+                    <td>${refTypeBadge}</td>
+                    <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                        ${audit.referenceName || audit.referenceId || 'N/A'}
+                    </td>
+                    <td style="text-align: right;">
+                        <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation(); showDetails(${JSON.stringify(audit).replace(/"/g, '&quot;')})">
+                            Ətraflı →
+                        </button>
+                    </td>
+                `;
+
+                tbody.appendChild(row);
+            });
+        }
+
+        // Get reference type badge
+        function getRefTypeBadge(type) {
+            const classes = {
+                'API': 'badge-api',
+                'APPLICATION': 'badge-app',
+                'ENVIRONMENT': 'badge-env',
+                'ORGANIZATION': 'badge-org'
+            };
+            return `<span class="badge ${classes[type] || 'badge-default'}">${type || 'N/A'}</span>`;
+        }
+
+        // Get event badge
+        function getEventBadge(event) {
+            if (!event) return '<span class="event-badge event-default">N/A</span>';
+            
+            let className = 'event-default';
+            if (event.includes('CREATED')) className = 'event-created';
+            else if (event.includes('UPDATED')) className = 'event-updated';
+            else if (event.includes('DELETED') || event.includes('ARCHIVED')) className = 'event-deleted';
+
+            return `<span class="event-badge ${className}">${event}</span>`;
+        }
+
+        // Render patch operations in a readable format
+        function renderPatchOperations(parsedPatch) {
+            if (!parsedPatch || !Array.isArray(parsedPatch) || parsedPatch.length === 0) {
+                return '<p style="color: #718096;">Dəyişiklik məlumatı yoxdur</p>';
+            }
+
+            return `
+                <div class="patch-operations">
+                    ${parsedPatch.map((op, index) => {
+                        const opClass = `op-${op.operation}`;
+                        let details = '';
+
+                        if (op.operation === 'copy' || op.operation === 'move') {
+                            details = `<strong>From:</strong> ${op.from} → <strong>To:</strong> ${op.path}`;
+                        } else if (op.operation === 'add' || op.operation === 'replace') {
+                            details = `<strong>Path:</strong> ${op.path}`;
+                            if (op.value !== undefined) {
+                                const valueStr = typeof op.value === 'object' 
+                                    ? JSON.stringify(op.value, null, 2) 
+                                    : String(op.value);
+                                const isLong = valueStr.length > 200;
+                                const valueId = `patch-value-${index}`;
+                                
+                                details += `
+                                    <div class="patch-value-preview ${isLong ? 'collapsed' : ''}" id="${valueId}">
+                                        ${escapeHtml(valueStr)}
+                                    </div>
+                                    ${isLong ? `<button class="expand-btn" onclick="togglePatchValue('${valueId}')">Daha çox göstər</button>` : ''}
+                                `;
+                            }
+                        } else if (op.operation === 'remove') {
+                            details = `<strong>Path:</strong> ${op.path}`;
+                        } else {
+                            details = `<strong>Path:</strong> ${op.path}`;
+                        }
+
+                        return `
+                            <div class="patch-operation ${opClass}">
+                                <div class="patch-op-header">
+                                    <span class="patch-op-type ${opClass}">${op.operation}</span>
+                                </div>
+                                <div class="patch-op-details">${details}</div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+        }
+
+        // Toggle patch value expansion
+        function togglePatchValue(elementId) {
+            const element = document.getElementById(elementId);
+            const button = element.nextElementSibling;
+            
+            if (element.classList.contains('collapsed')) {
+                element.classList.remove('collapsed');
+                button.textContent = 'Daha az göstər';
+            } else {
+                element.classList.add('collapsed');
+                button.textContent = 'Daha çox göstər';
+            }
+        }
+
+        // Escape HTML to prevent XSS
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Show details modal
+        function showDetails(audit) {
+            const modal = document.getElementById('detailModal');
+            const details = document.getElementById('modalDetails');
+            
+            // User info with email
+            const userInfo = audit.userName || audit.user || 'N/A';
+            const emailInfo = audit.userEmail ? `<br><small style="color: #718096;">${audit.userEmail}</small>` : '';
+
+            // Render patch section
+            const patchSection = audit.parsedPatch 
+                ? renderPatchOperations(audit.parsedPatch)
+                : audit.patch 
+                ? `<pre>${JSON.stringify(audit.patch, null, 2)}</pre>`
+                : '';
+
+            details.innerHTML = `
+                <div class="detail-section">
+                    <div class="detail-section-title">ℹ️ Əsas Məlumat</div>
+                    <div class="detail-row">
+                        <div class="detail-label">Audit ID</div>
+                        <div class="detail-value"><code style="font-size: 12px;">${audit._id}</code></div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Tarix</div>
+                        <div class="detail-value">${new Date(audit.createdAt).toLocaleString('az-AZ', { 
+                            year: 'numeric', month: 'long', day: 'numeric', 
+                            hour: '2-digit', minute: '2-digit', second: '2-digit' 
+                        })}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Event</div>
+                        <div class="detail-value">${getEventBadge(audit.event)}</div>
+                    </div>
+                </div>
+
+                <div class="detail-section">
+                    <div class="detail-section-title">👤 İstifadəçi Məlumatı</div>
+                    <div class="detail-row">
+                        <div class="detail-label">Əməliyyatı İcra Edən</div>
+                        <div class="detail-value">
+                            <strong>${userInfo}</strong>${emailInfo}
+                            <br><small style="color: var(--gray-500);">Bu əməliyyatı həyata keçirən istifadəçi</small>
+                        </div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">User ID</div>
+                        <div class="detail-value"><code style="font-size: 12px;">${audit.user || 'N/A'}</code></div>
+                    </div>
+                </div>
+
+                <div class="detail-section">
+                    <div class="detail-section-title">🎯 Referans Məlumatı</div>
+                    <div class="detail-row">
+                        <div class="detail-label">Tip</div>
+                        <div class="detail-value">${getRefTypeBadge(audit.referenceType)}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Referans ID</div>
+                        <div class="detail-value"><code style="font-size: 12px;">${audit.referenceId || 'N/A'}</code></div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Referans Adı</div>
+                        <div class="detail-value"><strong>${audit.referenceName || 'N/A'}</strong></div>
+                    </div>
+                </div>
+
+                ${patchSection ? `
+                <div class="detail-section">
+                    <div class="detail-section-title">🔄 Dəyişikliklər</div>
+                    ${patchSection}
+                </div>
+                ` : ''}
+
+                ${audit.targetUserName ? `
+                <div class="detail-section">
+                    <div class="detail-section-title">🎯 Target İstifadəçi</div>
+                    <div class="detail-row">
+                        <div class="detail-label">Əməliyyatın Obyekti</div>
+                        <div class="detail-value">
+                            <strong>${audit.targetUserName}</strong>
+                            <br><small style="color: var(--gray-500);">Bu istifadəçi üzərində əməliyyat həyata keçirilib (məs: API-yə əlavə edilib)</small>
+                        </div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Target User ID</div>
+                        <div class="detail-value"><code style="font-size: 12px;">${audit.properties.USER}</code></div>
+                    </div>
+                </div>
+                ` : ''}
+                
+                ${audit.properties ? `
+                <div class="detail-section">
+                    <div class="detail-section-title">⚙️ Properties</div>
+                    <pre>${JSON.stringify(audit.properties, null, 2)}</pre>
+                </div>
+                ` : ''}
+            `;
+
+            modal.classList.add('active');
+        }
+
+        // Close modal
+        function closeModal() {
+            document.getElementById('detailModal').classList.remove('active');
+        }
+
+        // Apply filters
+        function applyFilters() {
+            currentFilters = {};
+
+            const user = document.getElementById('filterUser').value.trim();
+            if (user) currentFilters.user = user;
+
+            const event = document.getElementById('filterEvent').value;
+            if (event) currentFilters.event = event;
+
+            const refType = document.getElementById('filterRefType').value;
+            if (refType) currentFilters.referenceType = refType;
+
+            const startDate = document.getElementById('filterStartDate').value;
+            if (startDate) currentFilters.startDate = startDate;
+
+            const endDate = document.getElementById('filterEndDate').value;
+            if (endDate) currentFilters.endDate = endDate;
+
+            currentAuditPage = 0;
+            loadAudits();
+        }
+
+        // Reset filters
+        function resetFilters() {
+            document.getElementById('filterUser').value = '';
+            document.getElementById('filterEvent').value = '';
+            document.getElementById('filterRefType').value = '';
+            document.getElementById('filterStartDate').value = '';
+            document.getElementById('filterEndDate').value = '';
+            
+            currentFilters = {};
+            currentAuditPage = 0;
+            loadAudits();
+        }
+
+        // Apply filters
+        function applyFilters() {
+            currentFilters = {};
+
+            const user = document.getElementById('filterUser').value.trim();
+            if (user) currentFilters.user = user;
+
+            const event = document.getElementById('filterEvent').value;
+            if (event) currentFilters.event = event;
+
+            const refType = document.getElementById('filterRefType').value;
+            if (refType) currentFilters.referenceType = refType;
+
+            const startDate = document.getElementById('filterStartDate').value;
+            if (startDate) currentFilters.startDate = startDate;
+
+            const endDate = document.getElementById('filterEndDate').value;
+            if (endDate) currentFilters.endDate = endDate;
+
+            currentPage = 0;
+            loadAudits();
+        }
+
+        // Reset filters
+        function resetFilters() {
+            document.getElementById('filterUser').value = '';
+            document.getElementById('filterEvent').value = '';
+            document.getElementById('filterRefType').value = '';
+            document.getElementById('filterStartDate').value = '';
+            document.getElementById('filterEndDate').value = '';
+            
+            currentFilters = {};
+            currentPage = 0;
+            loadAudits();
+        }
+
+        // Update pagination
+        function updatePagination() {
+            const totalPages = Math.ceil(totalRecords / pageSize);
+            const start = currentAuditPage * pageSize + 1;
+            const end = Math.min((currentAuditPage + 1) * pageSize, totalRecords);
+
+            document.getElementById('paginationInfo').textContent = 
+                `${start}-${end} / ${totalRecords} nəticə`;
+            
+            document.getElementById('pageInfo').textContent = 
+                `Səhifə ${currentAuditPage + 1} / ${totalPages}`;
+
+            document.getElementById('btnPrev').disabled = currentAuditPage === 0;
+            document.getElementById('btnNext').disabled = currentAuditPage >= totalPages - 1;
+        }
+
+        // Pagination functions
+        function previousPage() {
+            if (currentAuditPage > 0) {
+                currentAuditPage--;
+                loadAudits();
+            }
+        }
+
+        function nextPage() {
+            const totalPages = Math.ceil(totalRecords / pageSize);
+            if (currentAuditPage < totalPages - 1) {
+                currentAuditPage++;
+                loadAudits();
+            }
+        }
+
+        // Export to CSV
+        async function exportToCSV() {
+            try {
+                const params = new URLSearchParams({
+                    skip: 0,
+                    limit: 10000, // Max 10k records
+                    ...currentFilters
+                });
+
+                const response = await fetch(`${API_BASE}/audits?${params}`);
+                const data = await response.json();
+
+                if (!data.audits || data.audits.length === 0) {
+                    alert('Export üçün məlumat yoxdur');
+                    return;
+                }
+
+                // CSV headers
+                const headers = ['Tarix', 'İstifadəçi', 'Email', 'Event', 'Referans Tipi', 'Referans ID', 'Referans Adı'];
+                const csvRows = [headers.join(',')];
+
+                // CSV data
+                data.audits.forEach(audit => {
+                    const row = [
+                        new Date(audit.createdAt).toLocaleString('az-AZ'),
+                        `"${(audit.userName || audit.user || 'N/A').replace(/"/g, '""')}"`,
+                        `"${(audit.userEmail || '').replace(/"/g, '""')}"`,
+                        `"${(audit.event || 'N/A').replace(/"/g, '""')}"`,
+                        `"${(audit.referenceType || 'N/A').replace(/"/g, '""')}"`,
+                        `"${(audit.referenceId || 'N/A').replace(/"/g, '""')}"`,
+                        `"${(audit.referenceName || 'N/A').replace(/"/g, '""')}"`
+                    ];
+                    csvRows.push(row.join(','));
+                });
+
+                // Download
+                const csvContent = csvRows.join('\n');
+                const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                const url = URL.createObjectURL(blob);
+                
+                link.setAttribute('href', url);
+                link.setAttribute('download', `gravitee-audit-logs-${new Date().toISOString().split('T')[0]}.csv`);
+                link.style.visibility = 'hidden';
+                
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                console.log(`✅ ${data.audits.length} qeyd export edildi`);
+            } catch (error) {
+                console.error('Export xətası:', error);
+                alert('Export zamanı xəta baş verdi');
+            }
+        }
+
+        // Close modal on outside click
+        document.getElementById('detailModal').addEventListener('click', (e) => {
+            if (e.target.id === 'detailModal') {
+                closeModal();
+            }
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            // ESC to close modal
+            if (e.key === 'Escape') {
+                const modal = document.getElementById('detailModal');
+                if (modal.classList.contains('active')) {
+                    closeModal();
+                }
+            }
+        });
+
+        // Current page tracker
+        let currentPage = 'audits';
+
+        // Refresh current page
+        function refreshCurrentPage() {
+            if (currentPage === 'audits') loadAudits();
+            else if (currentPage === 'apis') loadAPIs();
+            else if (currentPage === 'applications') loadApplications();
+            else if (currentPage === 'users') loadUsers();
+            else if (currentPage === 'analytics') loadAnalytics();
+            else if (currentPage === 'alerts') loadAlerts();
+            else if (currentPage === 'config') loadConfig();
+        }
+
+        // Page Navigation
+        function showPage(pageName) {
+            currentPage = pageName;
+
+            // Update active nav item
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.target.closest('.nav-item').classList.add('active');
+
+            // Hide all pages
+            document.querySelectorAll('.page-content').forEach(page => {
+                page.style.display = 'none';
+            });
+
+            // Update page title
+            const titles = {
+                'audits': 'Audit Logs',
+                'apis': 'APIs',
+                'applications': 'Applications',
+                'users': 'İstifadəçilər',
+                'analytics': 'Analytics',
+                'alerts': 'Alerts',
+                'config': 'Configuration'
+            };
+            document.querySelector('.page-title').textContent = titles[pageName] || pageName;
+
+            // Show selected page
+            const pageMap = {
+                'audits': 'auditsPage',
+                'apis': 'apisPage',
+                'applications': 'applicationsPage',
+                'users': 'usersPage',
+                'analytics': 'analyticsPage',
+                'alerts': 'alertsPage',
+                'config': 'configPage'
+            };
+
+            const pageId = pageMap[pageName];
+            if (pageId) {
+                document.getElementById(pageId).style.display = 'block';
+
+                // Show/hide export button (only for audits)
+                const exportBtn = document.getElementById('exportBtn');
+                if (exportBtn) {
+                    exportBtn.style.display = pageName === 'audits' ? 'inline-flex' : 'none';
+                }
+
+                // Load data for the page
+                if (pageName === 'apis') loadAPIs();
+                else if (pageName === 'applications') loadApplications();
+                else if (pageName === 'users') loadUsers();
+                else if (pageName === 'analytics') loadAnalytics();
+                else if (pageName === 'alerts') loadAlerts();
+                else if (pageName === 'config') loadConfig();
+            }
+        }
+
+        // Load APIs
+        async function loadAPIs() {
+            const loading = document.getElementById('apisLoading');
+            const table = document.getElementById('apisTable');
+            const tbody = document.getElementById('apisTableBody');
+
+            loading.style.display = 'block';
+            table.style.display = 'none';
+
+            try {
+                const response = await fetch(`${API_BASE}/apis?limit=100`);
+                const data = await response.json();
+
+                tbody.innerHTML = '';
+                data.apis.forEach(api => {
+                    const row = document.createElement('tr');
+                    const updatedDate = api.updatedAt ? new Date(api.updatedAt).toLocaleDateString('az-AZ') : 'N/A';
+                    
+                    // API state can be in lifecycleState field
+                    const apiState = api.state || api.lifecycleState || 'UNKNOWN';
+                    const stateClass = apiState === 'STARTED' || apiState === 'PUBLISHED' ? 'event-created' : 
+                                      apiState === 'STOPPED' ? 'event-deleted' : 'event-default';
+                    const visibilityClass = api.visibility === 'PUBLIC' ? 'badge-api' : 'badge-default';
+
+                    row.innerHTML = `
+                        <td><strong>${api.name || 'N/A'}</strong></td>
+                        <td>${api.version || 'N/A'}</td>
+                        <td><span class="event-badge ${stateClass}">${apiState}</span></td>
+                        <td><span class="badge ${visibilityClass}">${api.visibility || 'PRIVATE'}</span></td>
+                        <td>${updatedDate}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+
+                loading.style.display = 'none';
+                table.style.display = 'table';
+            } catch (error) {
+                console.error('API yükləmə xətası:', error);
+                loading.innerHTML = '<div class="error-state"><div class="error-state-icon">⚠️</div><h3>Xəta</h3><p>API-lər yüklənərkən xəta baş verdi</p></div>';
+            }
+        }
+
+        // Search APIs
+        async function searchAPIs() {
+            const search = document.getElementById('apiSearch').value;
+            const loading = document.getElementById('apisLoading');
+            const table = document.getElementById('apisTable');
+            const tbody = document.getElementById('apisTableBody');
+
+            loading.style.display = 'block';
+            table.style.display = 'none';
+
+            try {
+                const response = await fetch(`${API_BASE}/apis?search=${encodeURIComponent(search)}&limit=100`);
+                const data = await response.json();
+
+                tbody.innerHTML = '';
+                data.apis.forEach(api => {
+                    const row = document.createElement('tr');
+                    const updatedDate = api.updatedAt ? new Date(api.updatedAt).toLocaleDateString('az-AZ') : 'N/A';
+                    
+                    const apiState = api.state || api.lifecycleState || 'UNKNOWN';
+                    const stateClass = apiState === 'STARTED' || apiState === 'PUBLISHED' ? 'event-created' : 
+                                      apiState === 'STOPPED' ? 'event-deleted' : 'event-default';
+                    const visibilityClass = api.visibility === 'PUBLIC' ? 'badge-api' : 'badge-default';
+
+                    row.innerHTML = `
+                        <td><strong>${api.name || 'N/A'}</strong></td>
+                        <td>${api.version || 'N/A'}</td>
+                        <td><span class="event-badge ${stateClass}">${apiState}</span></td>
+                        <td><span class="badge ${visibilityClass}">${api.visibility || 'PRIVATE'}</span></td>
+                        <td>${updatedDate}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+
+                loading.style.display = 'none';
+                table.style.display = 'table';
+            } catch (error) {
+                console.error('API axtarış xətası:', error);
+            }
+        }
+
+        // Load Applications
+        async function loadApplications() {
+            const loading = document.getElementById('appsLoading');
+            const table = document.getElementById('appsTable');
+            const tbody = document.getElementById('appsTableBody');
+
+            loading.style.display = 'block';
+            table.style.display = 'none';
+
+            try {
+                const response = await fetch(`${API_BASE}/applications?limit=100`);
+                const data = await response.json();
+
+                tbody.innerHTML = '';
+                data.applications.forEach(app => {
+                    const row = document.createElement('tr');
+                    const updatedDate = app.updatedAt ? new Date(app.updatedAt).toLocaleDateString('az-AZ') : 'N/A';
+                    
+                    const statusClass = app.status === 'ACTIVE' ? 'event-created' : 'event-default';
+
+                    row.innerHTML = `
+                        <td><strong>${app.name || 'N/A'}</strong></td>
+                        <td><span class="badge badge-app">${app.type || 'N/A'}</span></td>
+                        <td><span class="event-badge ${statusClass}">${app.status || 'N/A'}</span></td>
+                        <td>${app.primaryOwner?.displayName || 'N/A'}</td>
+                        <td>${updatedDate}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+
+                loading.style.display = 'none';
+                table.style.display = 'table';
+            } catch (error) {
+                console.error('Application yükləmə xətası:', error);
+                loading.innerHTML = '<div class="error-state"><div class="error-state-icon">⚠️</div><h3>Xəta</h3><p>Application-lar yüklənərkən xəta baş verdi</p></div>';
+            }
+        }
+
+        // Search Applications
+        async function searchApplications() {
+            const search = document.getElementById('appSearch').value;
+            const loading = document.getElementById('appsLoading');
+            const table = document.getElementById('appsTable');
+            const tbody = document.getElementById('appsTableBody');
+
+            loading.style.display = 'block';
+            table.style.display = 'none';
+
+            try {
+                const response = await fetch(`${API_BASE}/applications?search=${encodeURIComponent(search)}&limit=100`);
+                const data = await response.json();
+
+                tbody.innerHTML = '';
+                data.applications.forEach(app => {
+                    const row = document.createElement('tr');
+                    const updatedDate = app.updatedAt ? new Date(app.updatedAt).toLocaleDateString('az-AZ') : 'N/A';
+                    
+                    const statusClass = app.status === 'ACTIVE' ? 'event-created' : 'event-default';
+
+                    row.innerHTML = `
+                        <td><strong>${app.name || 'N/A'}</strong></td>
+                        <td><span class="badge badge-app">${app.type || 'N/A'}</span></td>
+                        <td><span class="event-badge ${statusClass}">${app.status || 'N/A'}</span></td>
+                        <td>${app.primaryOwner?.displayName || 'N/A'}</td>
+                        <td>${updatedDate}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+
+                loading.style.display = 'none';
+                table.style.display = 'table';
+            } catch (error) {
+                console.error('Application axtarış xətası:', error);
+            }
+        }
+
+        // Load Users
+        async function loadUsers() {
+            const loading = document.getElementById('usersLoading');
+            const table = document.getElementById('usersTable');
+            const tbody = document.getElementById('usersTableBody');
+
+            loading.style.display = 'block';
+            table.style.display = 'none';
+
+            try {
+                const response = await fetch(`${API_BASE}/users-list?limit=100`);
+                const data = await response.json();
+
+                tbody.innerHTML = '';
+                data.users.forEach(user => {
+                    const row = document.createElement('tr');
+                    const fullName = `${user.firstname || ''} ${user.lastname || ''}`.trim() || user.displayName || 'N/A';
+                    const updatedDate = user.updatedAt ? new Date(user.updatedAt).toLocaleDateString('az-AZ') : 'N/A';
+                    
+                    const statusClass = user.status === 'ACTIVE' ? 'event-created' : 'event-default';
+
+                    row.innerHTML = `
+                        <td><strong>${fullName}</strong></td>
+                        <td>${user.email || 'N/A'}</td>
+                        <td><span class="badge badge-env">${user.source || 'N/A'}</span></td>
+                        <td><span class="event-badge ${statusClass}">${user.status || 'N/A'}</span></td>
+                        <td>${updatedDate}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+
+                loading.style.display = 'none';
+                table.style.display = 'table';
+            } catch (error) {
+                console.error('User yükləmə xətası:', error);
+                loading.innerHTML = '<div class="error-state"><div class="error-state-icon">⚠️</div><h3>Xəta</h3><p>İstifadəçilər yüklənərkən xəta baş verdi</p></div>';
+            }
+        }
+
+        // Search Users
+        async function searchUsers() {
+            const search = document.getElementById('userSearch').value;
+            const loading = document.getElementById('usersLoading');
+            const table = document.getElementById('usersTable');
+            const tbody = document.getElementById('usersTableBody');
+
+            loading.style.display = 'block';
+            table.style.display = 'none';
+
+            try {
+                const response = await fetch(`${API_BASE}/users-list?search=${encodeURIComponent(search)}&limit=100`);
+                const data = await response.json();
+
+                tbody.innerHTML = '';
+                data.users.forEach(user => {
+                    const row = document.createElement('tr');
+                    const fullName = `${user.firstname || ''} ${user.lastname || ''}`.trim() || user.displayName || 'N/A';
+                    const updatedDate = user.updatedAt ? new Date(user.updatedAt).toLocaleDateString('az-AZ') : 'N/A';
+                    
+                    const statusClass = user.status === 'ACTIVE' ? 'event-created' : 'event-default';
+
+                    row.innerHTML = `
+                        <td><strong>${fullName}</strong></td>
+                        <td>${user.email || 'N/A'}</td>
+                        <td><span class="badge badge-env">${user.source || 'N/A'}</span></td>
+                        <td><span class="event-badge ${statusClass}">${user.status || 'N/A'}</span></td>
+                        <td>${updatedDate}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+
+                loading.style.display = 'none';
+                table.style.display = 'table';
+            } catch (error) {
+                console.error('User axtarış xətası:', error);
+            }
+        }
+
+        // Load Applications
+        async function loadApplications() {
+            const loading = document.getElementById('appsLoading');
+            const table = document.getElementById('appsTable');
+            const tbody = document.getElementById('appsTableBody');
+
+            loading.style.display = 'block';
+            table.style.display = 'none';
+
+            try {
+                const response = await fetch(`${API_BASE}/applications?limit=100`);
+                const data = await response.json();
+
+                tbody.innerHTML = '';
+                data.applications.forEach(app => {
+                    const row = document.createElement('tr');
+                    const updatedDate = app.updatedAt ? new Date(app.updatedAt).toLocaleDateString('az-AZ') : 'N/A';
+                    
+                    const statusClass = app.status === 'ACTIVE' ? 'event-created' : 'event-default';
+
+                    row.innerHTML = `
+                        <td><strong>${app.name || 'N/A'}</strong></td>
+                        <td><span class="badge badge-app">${app.type || 'N/A'}</span></td>
+                        <td><span class="event-badge ${statusClass}">${app.status || 'N/A'}</span></td>
+                        <td>${app.ownerName || 'N/A'}</td>
+                        <td>${updatedDate}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+
+                loading.style.display = 'none';
+                table.style.display = 'table';
+            } catch (error) {
+                console.error('Application yükləmə xətası:', error);
+                loading.innerHTML = '<div class="error-state"><div class="error-state-icon">⚠️</div><h3>Xəta</h3><p>Application-lar yüklənərkən xəta baş verdi</p></div>';
+            }
+        }
+
+        // Search Applications
+        async function searchApplications() {
+            const search = document.getElementById('appSearch').value;
+            const loading = document.getElementById('appsLoading');
+            const table = document.getElementById('appsTable');
+            const tbody = document.getElementById('appsTableBody');
+
+            loading.style.display = 'block';
+            table.style.display = 'none';
+
+            try {
+                const response = await fetch(`${API_BASE}/applications?search=${encodeURIComponent(search)}&limit=100`);
+                const data = await response.json();
+
+                tbody.innerHTML = '';
+                data.applications.forEach(app => {
+                    const row = document.createElement('tr');
+                    const updatedDate = app.updatedAt ? new Date(app.updatedAt).toLocaleDateString('az-AZ') : 'N/A';
+                    
+                    const statusClass = app.status === 'ACTIVE' ? 'event-created' : 'event-default';
+
+                    row.innerHTML = `
+                        <td><strong>${app.name || 'N/A'}</strong></td>
+                        <td><span class="badge badge-app">${app.type || 'N/A'}</span></td>
+                        <td><span class="event-badge ${statusClass}">${app.status || 'N/A'}</span></td>
+                        <td>${app.ownerName || 'N/A'}</td>
+                        <td>${updatedDate}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+
+                loading.style.display = 'none';
+                table.style.display = 'table';
+            } catch (error) {
+                console.error('Application axtarış xətası:', error);
+            }
+        }
+
+        // Load Users
+        async function loadUsers() {
+            const loading = document.getElementById('usersLoading');
+            const table = document.getElementById('usersTable');
+            const tbody = document.getElementById('usersTableBody');
+
+            loading.style.display = 'block';
+            table.style.display = 'none';
+
+            try {
+                const response = await fetch(`${API_BASE}/users-list?limit=100`);
+                const data = await response.json();
+
+                tbody.innerHTML = '';
+                data.users.forEach(user => {
+                    const row = document.createElement('tr');
+                    const fullName = `${user.firstname || ''} ${user.lastname || ''}`.trim() || user.displayName || 'N/A';
+                    const updatedDate = user.updatedAt ? new Date(user.updatedAt).toLocaleDateString('az-AZ') : 'N/A';
+                    
+                    const statusClass = user.status === 'ACTIVE' ? 'event-created' : 'event-default';
+
+                    row.innerHTML = `
+                        <td><strong>${fullName}</strong></td>
+                        <td>${user.email || 'N/A'}</td>
+                        <td><span class="badge badge-env">${user.source || 'N/A'}</span></td>
+                        <td><span class="event-badge ${statusClass}">${user.status || 'N/A'}</span></td>
+                        <td>${updatedDate}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+
+                loading.style.display = 'none';
+                table.style.display = 'table';
+            } catch (error) {
+                console.error('User yükləmə xətası:', error);
+                loading.innerHTML = '<div class="error-state"><div class="error-state-icon">⚠️</div><h3>Xəta</h3><p>İstifadəçilər yüklənərkən xəta baş verdi</p></div>';
+            }
+        }
+
+        // Search Users
+        async function searchUsers() {
+            const search = document.getElementById('userSearch').value;
+            const loading = document.getElementById('usersLoading');
+            const table = document.getElementById('usersTable');
+            const tbody = document.getElementById('usersTableBody');
+
+            loading.style.display = 'block';
+            table.style.display = 'none';
+
+            try {
+                const response = await fetch(`${API_BASE}/users-list?search=${encodeURIComponent(search)}&limit=100`);
+                const data = await response.json();
+
+                tbody.innerHTML = '';
+                data.users.forEach(user => {
+                    const row = document.createElement('tr');
+                    const fullName = `${user.firstname || ''} ${user.lastname || ''}`.trim() || user.displayName || 'N/A';
+                    const updatedDate = user.updatedAt ? new Date(user.updatedAt).toLocaleDateString('az-AZ') : 'N/A';
+                    
+                    const statusClass = user.status === 'ACTIVE' ? 'event-created' : 'event-default';
+
+                    row.innerHTML = `
+                        <td><strong>${fullName}</strong></td>
+                        <td>${user.email || 'N/A'}</td>
+                        <td><span class="badge badge-env">${user.source || 'N/A'}</span></td>
+                        <td><span class="event-badge ${statusClass}">${user.status || 'N/A'}</span></td>
+                        <td>${updatedDate}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+
+                loading.style.display = 'none';
+                table.style.display = 'table';
+            } catch (error) {
+                console.error('User axtarış xətası:', error);
+            }
+        }
+
+        // Load Analytics
+        async function loadAnalytics() {
+            try {
+                const response = await fetch(`${API_BASE}/analytics`);
+                const data = await response.json();
+
+                // Update stats
+                document.getElementById('topAPIsCount').textContent = data.topAPIs.length;
+                document.getElementById('topUsersCount').textContent = data.topUsers.length;
+                document.getElementById('eventTypesCount').textContent = data.eventDistribution.length;
+
+                // Top APIs table
+                const topAPIsBody = document.getElementById('topAPIsBody');
+                topAPIsBody.innerHTML = '';
+                data.topAPIs.forEach(api => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td><strong>${api.name}</strong></td>
+                        <td><span class="badge badge-api">${api.count} aktivlik</span></td>
+                    `;
+                    topAPIsBody.appendChild(row);
+                });
+
+                // Top Users table
+                const topUsersBody = document.getElementById('topUsersBody');
+                topUsersBody.innerHTML = '';
+                data.topUsers.forEach(user => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td><strong>${user.name}</strong></td>
+                        <td><span class="badge badge-env">${user.count} aktivlik</span></td>
+                    `;
+                    topUsersBody.appendChild(row);
+                });
+
+                document.getElementById('analyticsLoading1').style.display = 'none';
+                document.getElementById('analyticsLoading2').style.display = 'none';
+                document.getElementById('topAPIsTable').style.display = 'table';
+                document.getElementById('topUsersTable').style.display = 'table';
+            } catch (error) {
+                console.error('Analytics yükləmə xətası:', error);
+            }
+        }
+
+        // Load Alerts
+        async function loadAlerts() {
+            const loading = document.getElementById('alertsLoading');
+            const empty = document.getElementById('alertsEmpty');
+            const table = document.getElementById('alertsTable');
+            const tbody = document.getElementById('alertsBody');
+
+            loading.style.display = 'block';
+            empty.style.display = 'none';
+            table.style.display = 'none';
+
+            try {
+                const response = await fetch(`${API_BASE}/alerts`);
+                const data = await response.json();
+
+                if (data.alerts.length === 0) {
+                    loading.style.display = 'none';
+                    empty.style.display = 'block';
+                    return;
+                }
+
+                tbody.innerHTML = '';
+                data.alerts.forEach(alert => {
+                    const row = document.createElement('tr');
+                    const formattedDate = new Date(alert.createdAt).toLocaleString('az-AZ', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+
+                    row.innerHTML = `
+                        <td style="font-weight: 500; color: var(--gray-700);">${formattedDate}</td>
+                        <td><strong>${alert.userName}</strong></td>
+                        <td>${getEventBadge(alert.event)}</td>
+                        <td>${getRefTypeBadge(alert.referenceType)}</td>
+                        <td>${alert.referenceName || alert.referenceId || 'N/A'}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+
+                loading.style.display = 'none';
+                table.style.display = 'table';
+            } catch (error) {
+                console.error('Alerts yükləmə xətası:', error);
+                loading.innerHTML = '<div class="error-state"><div class="error-state-icon">⚠️</div><h3>Xəta</h3><p>Alert-lər yüklənərkən xəta baş verdi</p></div>';
+            }
+        }
+
+        // Load Configuration
+        function loadConfig() {
+            // Update node version and uptime
+            document.getElementById('nodeVersion').textContent = 'v22.x';
+            document.getElementById('serverUptime').textContent = 'Running';
+        }
+
+        // Initialize
+        init();
+    </script>
+</body>
+</html>
